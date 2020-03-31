@@ -52,9 +52,19 @@ print(f'Has {num_weak_conn} weakly connected components.')
 print(f'Size of weak giant component: {len(giant_weak)}')
 print(f'Size of strong giant component: {len(giant_strong)}')
 
+
 # %%
 # Create ego graph of main hub
 hub_ego = nx.ego_graph(G_reddit, largest_hub)
+
+# %%
+ego_strong = max(utils.get_strongly_connected_components(hub_ego), key=len)
+
+# %%
+print("Diameter: ", nx.diameter(ego_strong)) 
+print("Radius: ", nx.radius(ego_strong)) 
+print("Periphery: ", list(nx.periphery(ego_strong))) 
+print("Center: ", list(nx.center(ego_strong)))
 
 # %%
 # Draw graph
@@ -74,7 +84,6 @@ subreddit_names = utils.load_obj(constants.PROC_DATA_DIR, 'subreddit_names')
 
 # %%
 subreddit_names[largest_hub]
-
 
 # %%
 """

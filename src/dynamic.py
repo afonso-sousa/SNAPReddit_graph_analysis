@@ -1,33 +1,23 @@
 # %%
 # Importing the required libraries
-import csv
-import os
-import pickle
-import random
-from itertools import combinations, count
-from operator import itemgetter
+from itertools import combinations
 
-import community
 import matplotlib.animation
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import tqdm
-from IPython.display import HTML, Image
-from matplotlib import animation, pylab, rc
+from IPython.display import Image
 
 from src import constants, utils
-from src.snowball import Snowball
 
 # %%
 df = pd.read_csv(constants.PROC_DATA_DIR / 'combined.csv',
                  sep='\t', parse_dates=['TIMESTAMP'])
 
 # %%
-# G_reddit = nx.from_pandas_edgelist(df[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']],
-#                                   source='SOURCE_SUBREDDIT', target='TARGET_SUBREDDIT', edge_attr=None, create_using=nx.DiGraph())
+G_reddit = nx.from_pandas_edgelist(df[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']],
+                                   source='SOURCE_SUBREDDIT', target='TARGET_SUBREDDIT', edge_attr=None, create_using=nx.DiGraph())
 
 # %%
 df.set_index('TIMESTAMP', inplace=True)
@@ -51,6 +41,7 @@ fig, ax = plt.subplots(figsize=(12, 10))
 plt.axis('off')
 
 G_100 = nx.Graph()
+
 
 def animate(frame):
     ax.clear()
@@ -76,6 +67,9 @@ def animate(frame):
     length3 = list(np.where(np.array(clique_len) == 3)[0])
     cliques3 = [cliques[i] for i in length3]
 
+    _, subG = utils.find_open_triads(G_100)
+    open_triads_edges = subG.edges
+
     # nodes
     nx.draw_networkx_nodes(G_100, pos=curr_pos, ax=ax, node_color='b',
                            node_size=50)
@@ -86,16 +80,27 @@ def animate(frame):
     # edges
     nx.draw_networkx_edges(G_100, pos=curr_pos, ax=ax, alpha=0.2)
 
+    if open_triads_edges:
+        nx.draw_networkx_edges(G_100, pos=curr_pos, edgelist=open_triads_edges,
+                               ax=ax, width=2, edge_color=['r'], alpha=0.2)
+
     if length3:
         edges3 = list(combinations(cliques3[0], 2))
-        nx.draw_networkx_edges(G_100, pos=curr_pos, edgelist=edges3, ax=ax, width=2, edge_color=['green', 'green', 'green'])
+        nx.draw_networkx_edges(
+            G_100, pos=curr_pos, edgelist=edges3, ax=ax, width=2, edge_color=['g'])
 
-        node_labels = {id: name for (id, name) in subreddit_names.items() if id in cliques3[0]}
-        nx.draw_networkx_labels(G_100, pos=curr_pos, labels=node_labels, ax=ax, font_size=16)
-    
+        node_labels = {id: name for (
+            id, name) in subreddit_names.items() if id in cliques3[0]}
+        nx.draw_networkx_labels(G_100, pos=curr_pos,
+                                labels=node_labels, ax=ax, font_size=16)
+        plt.pause(4)
+
 
 ani = matplotlib.animation.FuncAnimation(
     fig, animate, frames=100, interval=1000)
-ani.save('traidic_closure.gif', writer='imagemagick', fps=8)
+ani.save(constants.ROOT_DIR / 'images' / 'triadic_closure.gif', writer='imagemagick', fps=6)
 
-Image(url='traidic_closure.gif')
+Image(url=constants.ROOT_DIR / 'images' / 'triadic_closure.gif')
+
+
+# %%

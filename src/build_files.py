@@ -1,18 +1,12 @@
 # %%
 # Importing the required libraries
-import csv
-import os
-import pickle
 import random
 
 import networkx as nx
 import numpy as np
 import pandas as pd
-import tqdm
 
 from src import constants, utils
-
-os.chdir('/home/afonso/Projects/ARSI/SNAPReddit_link_prediction')
 
 # %%
 # Subreddit embeddings
@@ -50,7 +44,6 @@ temp_normalised_embeddings = np.divide(subreddits.loc[:, 'e1':], np.array(
 # null embeddings
 to_remove = temp_normalised_embeddings[temp_normalised_embeddings.isnull().any(
     axis=1)].index.values
-to_remove
 
 subreddits.loc[to_remove, :]
 subreddits = subreddits.drop(to_remove, axis=0).reset_index(drop=True)
@@ -94,17 +87,30 @@ combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']] = combined[[
 combined.reset_index(drop=True, inplace=True)
 
 # %%
-factor = 1
+factor = 0.5
 to_keep = random.sample(range(len(combined)),
                         k=int(round(len(combined) * factor)))
-combined = combined.loc[to_keep, :].reset_index(drop=True)
+sampled = combined.loc[to_keep, :].reset_index(drop=True)
+
+sampled[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', 'LINK_SENTIMENT']].to_csv(constants.PROC_DATA_DIR / 'sampled_reddit_edgelist.csv',
+                                                          header=None, index=None)
+
+
 
 # %%
+# SOURCE TARGET edge list
 combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']].to_csv(constants.PROC_DATA_DIR / 'edge_list.txt',
                                                           header=None, index=None, sep=' ')
 
+# %%
+# SOURCE TARGET LABEL edge list
+combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', 'LINK_SENTIMENT']].to_csv(constants.PROC_DATA_DIR / 'reddit_edgelist.csv',
+                                                          header=None, index=None)
+
+
 
 # %%
+# Full data
 combined.to_csv(constants.PROC_DATA_DIR / 'combined.csv',
                 index=False, sep='\t')
 

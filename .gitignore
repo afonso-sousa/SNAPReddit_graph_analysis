@@ -111,6 +111,7 @@ dmypy.json
 # Ignore all local history of files
 .history
 
-### Data
+### Non-essential data
 data/*
 output/*
+images/*

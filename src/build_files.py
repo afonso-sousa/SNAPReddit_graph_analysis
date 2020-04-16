@@ -51,6 +51,11 @@ temp_normalised_embeddings = temp_normalised_embeddings.drop(
     labels=to_remove, axis=0).reset_index(drop=True)
 
 # %%
+subreddits.to_csv(constants.PROC_DATA_DIR / 'subreddit_embeddings.txt',
+                                                          header=None, index=None, sep=' ')
+
+
+# %%
 # Storing embeddings dictionary
 embeddings = temp_normalised_embeddings.to_dict(orient='index')
 utils.save_obj(embeddings, constants.PROC_DATA_DIR, 'embeddings')

@@ -39,7 +39,7 @@ class Queue():
 class Snowball():
 
     def __init__(self):
-        self.G1 = nx.DiGraph()
+        self.nodes_list = []
 
     def snowball(self, G, size, k):
         q = Queue()
@@ -49,21 +49,21 @@ class Snowball():
             id = random.sample(list(G.nodes()), 1)[0]
             q.enqueue(id)
             m = m - 1
-        while(len(self.G1.nodes()) <= size):
+        while(len(self.nodes_list) <= size):
             if(q.size() > 0):
                 id = q.dequeue()
-                self.G1.add_node(id)
+                self.nodes_list.append(id)
                 if(id not in dictt):
                     dictt.add(id)
                     list_neighbors = list(G.neighbors(id))
                     if(len(list_neighbors) > k):
                         for x in list_neighbors[:k]:
                             q.enqueue(x)
-                            self.G1.add_edge(id, x)
+                            self.nodes_list.append(x)
                     elif(len(list_neighbors) <= k and len(list_neighbors) > 0):
                         for x in list_neighbors:
                             q.enqueue(x)
-                            self.G1.add_edge(id, x)
+                            self.nodes_list.append(x)
                 else:
                     continue
             else:
@@ -71,5 +71,5 @@ class Snowball():
                     list(G.nodes()) and list(dictt), k)
                 for id in initial_nodes:
                     q.enqueue(id)
-        return self.G1
+        return G.subgraph(self.nodes_list)
         

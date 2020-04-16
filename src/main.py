@@ -21,6 +21,10 @@ G_reddit = nx.from_pandas_edgelist(df[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', '
 
 subreddit_names = utils.load_obj(constants.PROC_DATA_DIR, 'subreddit_names')
 
+# %%
+G_undir = G_reddit.to_undirected(reciprocal=True)
+G_undir.remove_nodes_from(list(nx.isolates(G_undir)))
+
 #####################################################
 ##################### SENTIMENT #####################
 #####################################################
@@ -29,9 +33,6 @@ subreddit_names = utils.load_obj(constants.PROC_DATA_DIR, 'subreddit_names')
 drawing.draw_sentiment_network(
     G_reddit, 200, names=subreddit_names, with_degree=True, savefig=True)
 
-# %%
-G_undir = G_reddit.to_undirected(reciprocal=True)
-G_undir.remove_nodes_from(list(nx.isolates(G_undir)))
 
 # %%
 triangle_types = utils.sentiment_triangles(G_undir)
@@ -74,12 +75,17 @@ sample_bridge = sampling.small_bridge(G_undir)
 #####################################################
 
 # %%
-sample = Snowball().snowball(G_undir, 1000, 5)
-sample = sample.to_undirected(reciprocal=True)
+sample = Snowball().snowball(G_undir, 300, 5)
+#sample = sample.to_undirected(reciprocal=True)
+sample = nx.Graph(sample)  # unfreeze
 sample.remove_nodes_from(list(nx.isolates(sample)))
+
+nx.write_edgelist(sample, constants.PROC_DATA_DIR /
+                  'sample_smaller.edgelist', data=['LINK_SENTIMENT'])
 
 
 # %%
+
 
 def community_layout(g, partition):
     pos_communities = _position_communities(g, partition, scale=3.)
@@ -184,7 +190,8 @@ drawing.print_simple_network(
     largest_subG, names=subreddit_names, bridges=bridges)
 
 # %%
-new_part = {key: value for (key, value) in partition.items() if (value == largest_group_idx) or (value == sec_large_group_idx)}
+new_part = {key: value for (key, value) in partition.items() if (
+    value == largest_group_idx) or (value == sec_large_group_idx)}
 new_part_subG = sample.subgraph(list(new_part.keys()))
 
 # %%
@@ -195,7 +202,8 @@ drawing.print_simple_network(new_part_subG, names=subreddit_names)
 partition2 = community_louvain.best_partition(new_part_subG)
 pos2 = community_layout(new_part_subG, partition2)
 
-nx.draw(new_part_subG, pos2, node_size=100, node_color=list(partition2.values()))
+nx.draw(new_part_subG, pos2, node_size=100,
+        node_color=list(partition2.values()))
 
 
 # %%

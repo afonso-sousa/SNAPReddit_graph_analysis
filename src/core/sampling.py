@@ -59,3 +59,10 @@ def small_bridge(G):
 
     return G.subgraph(sample_nodes)
 
+def small_graph_with_central_node(G, central_node):
+    sample_nodes = [central_node]
+
+    neighs_degree_1 = [neigh for neigh in list(G.neighbors(central_node)) if G.degree(neigh) == 1]
+    sample_nodes.extend(neighs_degree_1)
+
+    return G.subgraph(sample_nodes)

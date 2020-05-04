@@ -90,3 +90,24 @@ def find_open_triads(G):
                         nodes.update(k)
 
     return open_triads, G.subgraph(list(nodes))
+
+def add_toxicity_node_attribute(G):
+    node_toxicity = {}
+    for node in list(G):
+        out_edges = list(G.out_edges(node, data=True))
+        toxicity = sum(edge[2]['LINK_SENTIMENT'] for edge in out_edges if edge[2]['LINK_SENTIMENT'] < 0)
+        node_toxicity[node] = toxicity
+
+    nx.set_node_attributes(G, node_toxicity, 'TOXICITY')
+
+def add_toxicity_perc_node_attribute(G):
+    node_perc_tox = {}
+    for node in list(G):
+        out_edges = list(G.out_edges(node, data=True))
+        if len(out_edges) == 0:
+            node_perc_tox[node] = 0
+        else:
+            toxicity = sum(edge[2]['LINK_SENTIMENT'] for edge in out_edges if edge[2]['LINK_SENTIMENT'] < 0)
+            node_perc_tox[node] = toxicity / len(out_edges)
+
+    nx.set_node_attributes(G, node_perc_tox, 'PERC_TOXICITY')

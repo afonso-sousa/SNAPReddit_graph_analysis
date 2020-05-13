@@ -60,6 +60,19 @@ combined = pd.concat([title, body], axis=0).reset_index(drop=True)
 combined.head()
 
 # %%
+# Sample
+thresh = 500
+sample = combined[combined.SOURCE_SUBREDDIT.isin(subreddits['name'][:thresh])]
+# removing target nodes without embedding representation
+sample = sample[combined.TARGET_SUBREDDIT.isin(subreddits['name'][:thresh])]
+
+# %%
+# Mapper from name to index
+unique_subreddits = np.unique(
+    sample[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']].values)
+mapper = {k: v for v, k in enumerate(unique_subreddits)}
+
+# %%
 # removing source nodes without embedding representation
 combined = combined[combined.SOURCE_SUBREDDIT.isin(subreddits['name'])]
 # removing target nodes without embedding representation
@@ -74,6 +87,15 @@ mapper = {k: v for v, k in enumerate(unique_subreddits)}
 mapper_to_save = {v: k for k, v in mapper.items()}
 
 utils.save_obj(mapper_to_save, constants.PROC_DATA_DIR, 'subreddit_names')
+
+# %%
+sample.SOURCE_SUBREDDIT = sample.SOURCE_SUBREDDIT.map(mapper)
+sample.TARGET_SUBREDDIT = sample.TARGET_SUBREDDIT.map(mapper)
+
+# %%
+sample[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']] = sample[[
+    'SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']].astype(np.uint16)
+sample.reset_index(drop=True, inplace=True)
 
 # %%
 # Replace name strings by indexes in map
@@ -105,6 +127,11 @@ combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']].to_csv(constants.PROC_DATA_DI
 # Sentiment edge list
 combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', 'LINK_SENTIMENT']].to_csv(constants.PROC_DATA_DIR / 'sentiment_edgelist.csv',
                                                                             header=None, index=None)
+
+# %%
+# Sample with sentiment
+sample[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', 'LINK_SENTIMENT']].to_csv(constants.PROC_DATA_DIR / 'sample_sentiment_edgelist.csv',
+                                    header=None, index=None)
 
 # %%
 # Temporal sentiment edge list

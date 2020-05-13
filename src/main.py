@@ -320,37 +320,31 @@ toxic_nodes_sorted = {k: v for k, v in sorted(
     node_toxicity.items(), key=lambda item: item[1], reverse=True)}
 
 # %%
+out_degree = {node: G.out_degree(node) for node in G.nodes()}
+out_degree_sorted = [out_degree.get(i) for i in toxic_nodes_sorted.keys()]
+
+# %%
 plt.figure()
 toxicity_values = list(toxic_nodes_sorted.values())
-toxic_perc = np.array(toxicity_values) / len(toxicity_values) * 100
-plt.plot(np.cumsum(toxic_perc))
-degrees = list(G.degree(toxic_nodes_sorted.keys()))
-plt.plot(np.cumsum(list(zip(*degrees))[1]))
+#toxic_perc = np.array(toxicity_values) / len(toxicity_values) * 100
+# plt.plot(np.cumsum(toxic_perc))
+plt.plot(toxicity_values, out_degree_sorted)
+#degrees = list(G.degree(toxic_nodes_sorted.keys()))
+# plt.plot(np.cumsum(list(zip(*degrees))[1]))
 
-plt.xlabel('Number of subreddits')
-plt.ylabel('Number of toxic out-edges')
-plt.yscale('log')
-
-
-# %%
-degrees = [G.in_degree(n) for n in G.nodes()]
-plt.hist(degrees)
-plt.xlabel('Degree of nodes')
-plt.ylabel('Frequency')
-plt.yscale('log')
-plt.savefig(constants.ROOT_DIR / 'images' /
-            'degree_dist.png', bbox_inches='tight')
+plt.xlabel('Number of toxic out-edges')
+plt.ylabel('Total number of out-edges')
+# plt.yscale('log')
+# plt.xscale('log')
 
 # %%
 degrees = [G.in_degree(n) for n in G.nodes()]
 plt.hist(degrees)
-plt.plot(1/np.array(degrees)**2)
-plt.xlabel('In-degree of nodes')
+plt.xlabel('In-Degree of nodes')
 plt.ylabel('Frequency')
-plt.xscale('log')
 plt.yscale('log')
-plt.savefig(constants.ROOT_DIR / 'images' /
-            'in_degree_dist.png', bbox_inches='tight')
+#plt.savefig(constants.ROOT_DIR / 'images' /
+#            'in_degree_dist.png', bbox_inches='tight')
 
 # %%
 fit = powerlaw.Fit(np.array(degrees)+1, xmin=1, discrete=True)
@@ -435,10 +429,10 @@ for index, thresh in enumerate(thresholds):
         new_nodes = set(snapshots[index]) - set(snapshots[index - 1])
 
         ec = nx.draw_networkx_edges(snapshot,
-            pos, edgelist=new_edges, edge_color='g', alpha=0.2)
+                                    pos, edgelist=new_edges, edge_color='g', alpha=0.2)
 
         nc = nx.draw_networkx_nodes(snapshot,
-            pos, nodelist=new_nodes, node_color='g',
+                                    pos, nodelist=new_nodes, node_color='g',
                                     with_labels=False, node_size=node_size, cmap=plt.cm.Reds)
 
     plt.title(thresh.strftime("%B, %Y"))

@@ -7,13 +7,14 @@ _C = CN()
 
 # Dataset
 _C.DATA = CN()
-#ROOT_DIR = Path(__file__).resolve().parent.parent.parent
-#_C.DATA.INPUT_DIR = (ROOT_DIR / 'input').as_posix()
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+_C.DATA.INPUT_DIR = (ROOT_DIR / 'input').as_posix()
+_C.DATA.OUTPUT_DIR = (ROOT_DIR / 'output').as_posix()
 
-#_C.DATA.RAW_DATA_DIR =  os.path.join(_C.DATA.INPUT_DIR, 'raw/')
-#_C.DATA.PROC_DATA_DIR = os.path.join(_C.DATA.INPUT_DIR, 'processed/')
+_C.DATA.EMB_DIR = os.path.join(_C.DATA.OUTPUT_DIR, 'embedding/')
 
-_C.DATA.EDGE_PATH = '../input/reddit_edgelist.csv'
+_C.DATA.EDGE_PATH = os.path.join(_C.DATA.INPUT_DIR, 'sample_sentiment_edgelist.csv')
+#_C.DATA.EDGE_PATH = '../input/reddit_edgelist.csv'
 _C.DATA.FEATURES_PATH = '../input/reddit_edgelist.csv'
 _C.DATA.EMBEDDING_PATH = '../output/embedding/reddit_sgcn.csv'
 _C.DATA.REGRESSION_WEIGHTS_PATH = '../output/weights/reddit_sgcn.csv'
@@ -29,12 +30,12 @@ _C.SVD.REDUCTION_DIMS = 64
 _C.TRAIN = CN()
 _C.TRAIN.LR = 1e-2
 _C.TRAIN.LAMBDA = 1.0
-_C.TRAIN.EPOCHS = 100
+_C.TRAIN.EPOCHS = 150
 _C.TRAIN.WEIGHT_DECAY = 1e-5
 
 _C.SEED = 42
 _C.TEST_SIZE = 0.2
 _C.SPECTRAL_FEATURES = True
-_C.LAYERS = [32, 32]
+_C.LAYERS = [32, 64, 32]
 
 cfg = _C

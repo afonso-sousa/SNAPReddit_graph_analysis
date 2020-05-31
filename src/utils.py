@@ -111,3 +111,8 @@ def add_toxicity_perc_node_attribute(G):
             node_perc_tox[node] = toxicity / len(out_edges)
 
     nx.set_node_attributes(G, node_perc_tox, 'PERC_TOXICITY')
+
+
+def toxicity_out(node):
+    out_edges = G.out_edges(node)
+    return len([(source, target) for (source, target) in out_edges if G[source][target]['LINK_SENTIMENT'] == -1])

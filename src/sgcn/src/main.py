@@ -5,6 +5,7 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
@@ -100,43 +101,25 @@ score_printer(logs)
 save_logs(logs)
 
 # %%
-#neg_ratio = len(edges["negative_edges"])/edges["ecount"]
-pred = [1 if p > .5 else 0 for p in predictions]
-
-# %%
 
 
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+def save_model():
+    _, train_z = model(X, positive_edges, negative_edges, y)
+    train_z = train_z.cpu().detach().numpy()
+    embedding_header = ["id"] + ["x_"+str(x) for x in range(train_z.shape[1])]
+    train_z = np.concatenate(
+        [np.array(range(train_z.shape[0])).reshape(-1, 1), train_z], axis=1)
+    train_z = pd.DataFrame(train_z, columns=embedding_header)
+    train_z.to_csv(cfg.DATA.EMBEDDING_PATH, index=None)
 
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j],
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    regression_weights = model.regression_weights.cpu().detach().numpy().T
+    regression_header = ["x_" + str(x)
+                         for x in range(regression_weights.shape[1])]
+    regression_weights = pd.DataFrame(
+        regression_weights, columns=regression_header)
+    regression_weights.to_csv(cfg.DATA.REGRESSION_WEIGHTS_PATH, index=None)
 
 
-confusion_mtx = confusion_matrix(targets, pred)
-plot_confusion_matrix(confusion_mtx, ['positive', 'negative'])
-
+save_model()
 
 # %%

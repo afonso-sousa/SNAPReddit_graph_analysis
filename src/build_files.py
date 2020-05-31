@@ -62,15 +62,25 @@ combined.head()
 # %%
 # Sample
 thresh = 500
-sample = combined[combined.SOURCE_SUBREDDIT.isin(subreddits['name'][:thresh])]
+#uniques = np.unique(
+#    combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']].values
+#rnd_sample = random.sample(list(subreddits['name'].values), thresh)
+most_freq = combined.TARGET_SUBREDDIT.value_counts()[:thresh].index.tolist()
+sample = combined[(combined.SOURCE_SUBREDDIT.isin(most_freq)) & (
+    combined.TARGET_SUBREDDIT.isin(most_freq))]
 # removing target nodes without embedding representation
-sample = sample[combined.TARGET_SUBREDDIT.isin(subreddits['name'][:thresh])]
+#sample = sample[combined.TARGET_SUBREDDIT.isin(subreddits['name'][:thresh])]
 
 # %%
 # Mapper from name to index
 unique_subreddits = np.unique(
     sample[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT']].values)
 mapper = {k: v for v, k in enumerate(unique_subreddits)}
+
+mapper_to_save = {v: k for k, v in mapper.items()}
+
+utils.save_obj(mapper_to_save, constants.PROC_DATA_DIR, 'sample_subreddit_names')
+
 
 # %%
 # removing source nodes without embedding representation
@@ -131,18 +141,17 @@ combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', 'LINK_SENTIMENT']].to_csv(cons
 # %%
 # Sample with sentiment
 sample[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', 'LINK_SENTIMENT']].to_csv(constants.PROC_DATA_DIR / 'sample_sentiment_edgelist.csv',
-                                    header=None, index=None)
+                                                                          header=None, index=None)
 
 # %%
 # Temporal sentiment edge list
 combined[['SOURCE_SUBREDDIT', 'TARGET_SUBREDDIT', 'LINK_SENTIMENT', 'TIMESTAMP']].to_csv(constants.PROC_DATA_DIR / 'temporal_sentiment_edgelist.csv',
-                                                                            index=None, sep='\t')
+                                                                                         index=None, sep='\t')
 
 # %%
 # Full data
 combined.to_csv(constants.PROC_DATA_DIR / 'combined_data.csv',
                 index=False, sep='\t')
-
 
 
 ############################################

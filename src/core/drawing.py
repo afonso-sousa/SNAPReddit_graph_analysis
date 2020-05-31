@@ -11,10 +11,12 @@ from IPython.display import Image
 from src import constants, utils
 
 
-def draw_sentiment_network(G, thresh, names=None, with_degree=False, with_hits=False, savefig=False):
+def draw_sentiment_network(G, num_nodes, names=None, with_degree=False, with_hits=False, savefig=False):
     H = nx.DiGraph()
 
-    for (source, target) in list(G.edges)[:thresh]:
+    sample = random.sample(list(G.edges), num_nodes)
+
+    for (source, target) in sample:
         weight = G[source][target]['LINK_SENTIMENT']
         if weight == 1:
             H.add_edge(source, target, color='g')
@@ -55,7 +57,7 @@ def draw_sentiment_network(G, thresh, names=None, with_degree=False, with_hits=F
 
     if savefig:
         plt.savefig(constants.ROOT_DIR / 'images' /
-                    f'sentiment_net_{thresh}.png', bbox_inches='tight')
+                    f'sentiment_net_{num_nodes}.png', bbox_inches='tight')
 
 
 def draw_balance_triangle(G, triangles, names):
@@ -167,3 +169,56 @@ def triad_animation(edges, end_pos, names, save_path=None):
         animation.save(save_path, writer='imagemagick', fps=6)
 
     Image(url=save_path)
+
+
+def unbalanced_triangles_in_net(G_undir, names, num_edges):
+    sample = random.sample(list(G_undir.edges), num_edges)
+    H = G_undir.edge_subgraph(sample)
+
+    pos = nx.spring_layout(H, k=0.30, iterations=50)
+    plt.figure(figsize=(14, 12))
+
+    labels = {}
+    degree_sequence = list(H.degree())
+    (largest_hub, _) = sorted(degree_sequence, key=itemgetter(1))[-1]
+    (second_largest, _) = sorted(degree_sequence, key=itemgetter(1))[-2]
+
+    labels[largest_hub] = names[largest_hub]
+    labels[second_largest] = names[second_largest]
+
+    print(labels)
+    nx.draw_networkx_labels(
+        H, pos, labels, font_size=16, font_color='black')
+
+    nx.draw_networkx_edges(H, pos, edge_color='g', alpha=0.3)
+    nx.draw_networkx_nodes(H, pos, node_color='b',
+                           with_labels=False, node_size=50)
+
+    triangle_types = utils.sentiment_triangles(H)
+    for (triangle, sentiment) in triangle_types.items():
+        if sentiment == -1:
+            print('Found unbalanced triangle')
+            unb_tri = H.subgraph(triangle)
+            nx.draw_networkx_edges(H, pos, edgelist=list(
+                unb_tri.edges), edge_color='r')
+
+    plt.axis('off')
+
+
+def toxicity_per_centrality(G, save_path=None):
+    pos = nx.spring_layout(G, k=1, iterations=50)
+    bet_cent = nx.betweenness_centrality(
+        G, normalized=True, endpoints=True)
+    node_color = [node[1]['TOXICITY']
+                  for node in list(G.nodes(data=True))]
+    node_size = [v * 1e4 for v in bet_cent.values()]
+    plt.figure(figsize=(16, 14))
+
+    ec = nx.draw_networkx_edges(G, pos, alpha=0.2)
+    nc = nx.draw_networkx_nodes(G, pos, node_color=node_color,
+                                with_labels=False, node_size=node_size, cmap=plt.cm.Reds)
+    plt.colorbar(nc)
+    plt.axis('off')
+    if save_path:
+        plt.savefig(constants.ROOT_DIR / 'images' /
+                    'bet_cent_toxicity.png', bbox_inches='tight')

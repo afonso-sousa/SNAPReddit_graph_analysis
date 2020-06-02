@@ -4,7 +4,7 @@ from operator import itemgetter
 
 import networkx as nx
 
-from src import utils
+from SNAPReddit_graph_analysis.src.core import utils
 
 
 def small_graph(G, size='small'):
@@ -39,17 +39,19 @@ def small_bridge(G):
 
     sample_nodes = [node1]
 
-    neighs1 = [node for node in list(G.neighbors(node1)) if not utils.nodes_connected(G, node, node2)]
+    neighs1 = [node for node in list(G.neighbors(
+        node1)) if not utils.nodes_connected(G, node, node2)]
     assert len(neighs1) > 1
 
     if len(neighs1) > 4:
         neighs1 = random.sample(neighs1, 4)
 
     sample_nodes.extend(neighs1)
-    
+
     H = G.subgraph(sample_nodes)
 
-    neighs2 = [node for node in list(G.neighbors(node2)) if not H.has_node(node)]
+    neighs2 = [node for node in list(
+        G.neighbors(node2)) if not H.has_node(node)]
     assert len(neighs2) > 1
 
     if len(neighs2) > 4:
@@ -59,10 +61,12 @@ def small_bridge(G):
 
     return G.subgraph(sample_nodes)
 
+
 def small_graph_with_central_node(G, central_node):
     sample_nodes = [central_node]
 
-    neighs_degree_1 = [neigh for neigh in list(G.neighbors(central_node)) if G.degree(neigh) == 1]
+    neighs_degree_1 = [neigh for neigh in list(
+        G.neighbors(central_node)) if G.degree(neigh) == 1]
     sample_nodes.extend(neighs_degree_1)
 
     return G.subgraph(sample_nodes)

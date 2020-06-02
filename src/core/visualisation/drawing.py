@@ -1,6 +1,7 @@
 import random
 from itertools import combinations
 from operator import itemgetter
+from pathlib import Path
 
 import matplotlib.animation as ani
 import matplotlib.pyplot as plt
@@ -8,7 +9,8 @@ import networkx as nx
 import numpy as np
 from IPython.display import Image
 
-from src import constants, utils
+from SNAPReddit_graph_analysis.src.core import utils
+from SNAPReddit_graph_analysis.src.core.config import cfg
 
 
 def draw_sentiment_network(G, num_nodes, names=None, with_degree=False, with_hits=False, savefig=False):
@@ -56,7 +58,7 @@ def draw_sentiment_network(G, num_nodes, names=None, with_degree=False, with_hit
     plt.axis('off')
 
     if savefig:
-        plt.savefig(constants.ROOT_DIR / 'images' /
+        plt.savefig(Path(cfg.DATA.IMAGES_DIR) /
                     f'sentiment_net_{num_nodes}.png', bbox_inches='tight')
 
 
@@ -220,5 +222,5 @@ def toxicity_per_centrality(G, save_path=None):
     plt.colorbar(nc)
     plt.axis('off')
     if save_path:
-        plt.savefig(constants.ROOT_DIR / 'images' /
+        plt.savefig(Path(cfg.DATA.IMAGES_DIR) /
                     'bet_cent_toxicity.png', bbox_inches='tight')

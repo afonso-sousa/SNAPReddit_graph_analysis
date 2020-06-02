@@ -3,6 +3,7 @@
 import datetime
 from collections import defaultdict
 from operator import itemgetter
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -11,24 +12,28 @@ import pandas as pd
 import powerlaw
 from community import community_louvain
 
-from SNAPReddit_graph_analysis.src.core.visualisation import plotting
+from SNAPReddit_graph_analysis.src.core import bt_parallel, structure, utils
+from SNAPReddit_graph_analysis.src.core.config import cfg
+from SNAPReddit_graph_analysis.src.core.sampling import sampling
+from SNAPReddit_graph_analysis.src.core.sampling.snowball import Snowball
+from SNAPReddit_graph_analysis.src.core.visualisation import (cascading,
+                                                              drawing,
+                                                              plotting)
 from SNAPReddit_graph_analysis.src.core.visualisation.community_layout import \
     community_layout
 from SNAPReddit_graph_analysis.src.core.visualisation.temporal_snapshots import \
     temporal_snapshots
-from src import constants, utils
-from src.core import bt_parallel, drawing, sampling
-from src.snowball import Snowball
 
 # %%
 # Load data
-df = pd.read_csv(constants.PROC_DATA_DIR / 'temporal_sentiment_edgelist.csv',
+df = pd.read_csv(Path(cfg.DATA.PROC_DATA_DIR) / 'temporal_sentiment_edgelist.csv',
                  sep='\t', parse_dates=['TIMESTAMP'])
 
 G = nx.from_pandas_edgelist(df, source='SOURCE_SUBREDDIT',
                             target='TARGET_SUBREDDIT', edge_attr=True, create_using=nx.DiGraph())
 
-subreddit_names = utils.load_obj(constants.PROC_DATA_DIR, 'subreddit_names')
+subreddit_names = utils.load_obj(
+    Path(cfg.DATA.PROC_DATA_DIR), 'subreddit_names')
 
 # %%
 plotting.frequency_plot(df, 'LINK_SENTIMENT')
@@ -37,29 +42,10 @@ plotting.frequency_plot(df, 'LINK_SENTIMENT')
 plotting.node_frequency_time_bins(G)
 
 # %%
-degree_sequence = list(G.degree())
-(largest_hub, degree) = sorted(degree_sequence, key=itemgetter(1))[-1]
-avg_degree = np.around(np.mean(np.array(degree_sequence)[
-                       :, 1].astype(np.float)), decimals=3)
-med_degree = np.median(np.array(degree_sequence)[:, 1].astype(np.float))
-max_degree = max(np.array(degree_sequence)[:, 1].astype(np.float))
-min_degree = np.min(np.array(degree_sequence)[:, 1].astype(np.float))
-num_weak_conn = nx.number_weakly_connected_components(G)
+plotting.in_out_degree(G)
 
-weak_components = utils.get_weakly_connected_components(G)
-strong_components = utils.get_strongly_connected_components(G)
-giant_weak = max(weak_components, key=len)
-giant_strong = max(strong_components, key=len)
-
-print("Number of nodes: " + str(len(G)))
-print("Number of edges: " + str(len(G.edges())))
-print("Maximum degree: " + str(max_degree))
-print("Minimum degree: " + str(min_degree))
-print("Average degree: " + str(avg_degree))
-print("Median degree: " + str(med_degree))
-print(f'Has {num_weak_conn} weakly connected components.')
-print(f'Size of weak giant component: {len(giant_weak)}')
-print(f'Size of strong giant component: {len(giant_strong)}')
+# %%
+structure.main_info(G)
 
 # %%
 G_undir = G.to_undirected(reciprocal=True)
@@ -72,7 +58,6 @@ G_undir.remove_nodes_from(list(nx.isolates(G_undir)))
 # %%
 drawing.draw_sentiment_network(
     G, 200, names=subreddit_names, with_degree=True, savefig=True)
-
 
 # %%
 triangle_types = utils.sentiment_triangles(G_undir)
@@ -118,7 +103,7 @@ sample = Snowball().snowball(G_undir, 300, 5)
 sample = nx.Graph(sample)  # unfreeze
 sample.remove_nodes_from(list(nx.isolates(sample)))
 
-# nx.write_edgelist(sample, constants.PROC_DATA_DIR /
+# nx.write_edgelist(sample, Path(cfg.DATA.PROC_DATA_DIR) /
 #                  'sample_smaller.edgelist', data=['LINK_SENTIMENT'])
 
 # %%
@@ -180,15 +165,14 @@ pos = nx.spring_layout(G_aux, k=0.30, iterations=50)
 
 # %%
 drawing.triad_animation(edges, pos, subreddit_names,
-                        save_path=constants.ROOT_DIR / 'images' / 'triadic_closure.gif')
-
+                        save_path=Path(cfg.DATA.IMAGES_DIR) / 'triadic_closure.gif')
 
 
 # %%
 sample = Snowball().snowball(G, 300, 5)
 sample = nx.DiGraph(sample)  # unfreeze
 sample.remove_nodes_from(list(nx.isolates(sample)))
-# nx.write_edgelist(sample, constants.PROC_DATA_DIR /
+# nx.write_edgelist(sample, Path(cfg.DATA.PROC_DATA_DIR) /
 #                  'directed_sample.edgelist', data=['LINK_SENTIMENT'])
 
 
@@ -249,7 +233,7 @@ fit.power_law.plot_pdf(color='b', linestyle='--',
 fit.plot_pdf(color='b', label='in-degree distribution')
 plt.legend()
 print('alpha= ', fit.power_law.alpha, '  sigma= ', fit.power_law.sigma)
-plt.savefig(constants.ROOT_DIR / 'images' /
+plt.savefig(Path(cfg.DATA.IMAGES_DIR) /
             'in_degree_powerlaw.png', bbox_inches='tight')
 
 # %%
@@ -286,6 +270,28 @@ temporal_snapshots(sample, subreddit_names, thresholds)
 bt = bt_parallel.betweenness_centrality_parallel(sample)
 
 # %%
+sample = Snowball().snowball(G, 8000, 50)
+sample = nx.DiGraph(sample)  # unfreeze
+sample.remove_nodes_from(list(nx.isolates(sample)))
+
 plotting.six_separation(sample)
+
+# %%
+structure.bet_clo_eig_cen(sample, subreddit_names, 10)
+
+
+# %%
+node_color = [node[1]['TOXICITY']
+              for node in list(sample.nodes(data=True))]
+
+# %%
+sample = Snowball().snowball(G, 200, 5)
+sample = nx.DiGraph(sample)  # unfreeze
+sample.remove_nodes_from(list(nx.isolates(sample)))
+
+utils.add_toxicity_node_attribute(sample)
+
+# %%
+cascading.cascading_effect(sample, subreddit_names)
 
 # %%

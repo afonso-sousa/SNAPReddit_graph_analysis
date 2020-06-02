@@ -115,4 +115,5 @@ dmypy.json
 data/*
 output/*
 images/*
+src/legacy/*
 src/sgcn/output/*

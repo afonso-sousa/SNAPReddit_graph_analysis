@@ -1,4 +1,6 @@
 # %%
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -8,16 +10,20 @@ from gensim.scripts.glove2word2vec import glove2word2vec
 from gensim.test.utils import datapath, get_tmpfile
 from sklearn.manifold import TSNE
 
-from src import constants, utils
+from SNAPReddit_graph_analysis.src.core import utils
+from SNAPReddit_graph_analysis.src.core.config import cfg
 
 # %%
 # Glove format to Word2Vec format to load with Gensim package
-glove_file = datapath(constants.PROC_DATA_DIR / 'subreddit_embeddings.txt')
-tmp_file = get_tmpfile(constants.PROC_DATA_DIR / 'emb_word2vec.txt')
+glove_file = datapath(Path(cfg.DATA.PROC_DATA_DIR) / 'subreddit_embeddings.txt')
+tmp_file = get_tmpfile(Path(cfg.DATA.PROC_DATA_DIR) / 'emb_word2vec.txt')
 
 _ = glove2word2vec(glove_file, tmp_file)
 
-model = KeyedVectors.load_word2vec_format(tmp_file)
+
+# %%
+model = KeyedVectors.load_word2vec_format(
+    Path(cfg.DATA.PROC_DATA_DIR) / 'emb_word2vec.txt')
 
 # %%
 
@@ -77,7 +83,6 @@ def display_closestwords_tsnescatterplot(model, word, size):
 display_closestwords_tsnescatterplot(model, 'askreddit', 300)
 
 
-
 # %%
 result = model.most_similar(positive=['programming', 'datascience'])
 print("{}: {:.4f}".format(*result[0]))
@@ -111,12 +116,12 @@ print("{:.4f}".format(sim))
 ############################################
 
 # %%
-sample = nx.read_edgelist(constants.PROC_DATA_DIR / 'sample_smaller.edgelist',
+sample = nx.read_edgelist(Path(cfg.DATA.PROC_DATA_DIR) / 'sample_smaller.edgelist',
                           nodetype=int, data=(('LINK_SENTIMENT', int),))
 
 
 # %%
-subreddit_names = utils.load_obj(constants.PROC_DATA_DIR, 'subreddit_names')
+subreddit_names = utils.load_obj(Path(cfg.DATA.PROC_DATA_DIR), 'subreddit_names')
 
 
 # %%
@@ -174,7 +179,7 @@ nx.draw_networkx_labels(
 
 # DIRECTED GRAPH #
 # %%
-sample = nx.read_edgelist(constants.PROC_DATA_DIR / 'directed_sample.edgelist',
+sample = nx.read_edgelist(Path(cfg.DATA.PROC_DATA_DIR) / 'directed_sample.edgelist',
                           nodetype=int, data=(('LINK_SENTIMENT', int),), create_using=nx.DiGraph())
 
 # %%
@@ -198,7 +203,8 @@ y_coords = Y[:, 1]
 
 pos = dict(zip(sample.nodes(), np.array(list(zip(x_coords, y_coords)))))
 bet_cent = nx.betweenness_centrality(sample, normalized=True, endpoints=True)
-node_color = [node[1]['PERC_TOXICITY'] for node in list(sample.nodes(data=True))]
+node_color = [node[1]['PERC_TOXICITY']
+              for node in list(sample.nodes(data=True))]
 node_size = [v * 1e4 for v in bet_cent.values()]
 
 plt.figure(figsize=(16, 14))
@@ -212,7 +218,7 @@ nx.draw_networkx_labels(
 plt.colorbar(nc)
 plt.axis('off')
 
-plt.savefig(constants.ROOT_DIR / 'images' /
-            'bet_cent_perc_toxicity.png', bbox_inches='tight')
+#plt.savefig(path(cfg.DATA.IMAGES_DIR) /
+#            'bet_cent_perc_toxicity.png', bbox_inches='tight')
 
 # %%
